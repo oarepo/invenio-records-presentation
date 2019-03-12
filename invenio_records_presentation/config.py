@@ -9,6 +9,12 @@
 
 from __future__ import absolute_import, print_function
 
+WORKFLOWS_OBJECT_CLASS = 'invenio_records_presentation.api.PresentationWorkflowObject'
+""" Class to be passed into records presentation tasks """
+
+INVENIO_RECORDS_PRESENTATION_SCRATCH_LOCATION = None
+""" Location of temporary files created by presentation tasks. Defaults to: /tmp/ """
+
 INVENIO_RECORDS_PRESENTATION_TYPES = dict(
     # presentation_id: {
     #   tasks: [

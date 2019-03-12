@@ -9,11 +9,13 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, jsonify, abort
-from invenio_workflows import workflows
+from flask import Blueprint, jsonify, abort, request, Response
+from flask_login import current_user
+from invenio_workflows import WorkflowEngine
 
-from invenio_records_presentation.api import Presentation
-from invenio_records_presentation.proxies import current_records_presentation
+from .api import Presentation
+from .errors import PresentationNotFound
+from .proxies import current_records_presentation
 
 blueprint = Blueprint(
     'invenio_records_presentation',
@@ -31,18 +33,24 @@ this file.
 def prepare(record_uuid: str, presentation_id: str):
     try:
         p: Presentation = current_records_presentation.get_presentation(presentation_id)
-    except AttributeError:
+        user_meta = {
+            'id': current_user.id,
+            'email': current_user.email,
+            'current_login_ip': str(current_user.current_login_ip)
+        }
+        headers = {k: v for k, v in request.headers }
+        async_result = p.prepare(record_uuid, user_meta, headers)
+        return jsonify({'jobid': async_result.id})
+    except PresentationNotFound:
         abort(400)
 
-    w = p.workflow()
-    return jsonify(dict(workflows))
+@blueprint.route("/status/<string:eng_uuid>/")
+def status(eng_uuid: str):
+    engine = WorkflowEngine.from_uuid(eng_uuid)
+    return jsonify(engine.objects[0].status)
 
 
-@blueprint.route("/status/<string:task_id>/")
-def status(task_id: str):
-    return jsonify(dict(workflows))
-
-
-@blueprint.route("/download/<string:task_id>/")
-def download(task_id):
-    return jsonify({})
+@blueprint.route("/download/<string:eng_uuid>/")
+def download(eng_uuid):
+    engine = WorkflowEngine.from_uuid(eng_uuid)
+    return Response(engine.objects[0].data)
