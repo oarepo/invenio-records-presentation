@@ -26,22 +26,24 @@ def obj_or_import_string(value, default=None):
 
 class ScratchDirectory:
 
+    id = 0
+
     def __init__(self, scratch_dir=None):
         from .proxies import current_records_presentation
 
         self.scratch_root = current_records_presentation.scratch_location
 
         if scratch_dir:
-            self.validate_dir(scratch_dir)
-
             self.scratch_dir = scratch_dir
+            self.validate_dir(scratch_dir)
             for _, _, files in os.walk(self.scratch_dir):
                 for file in files:
                     fileid = int(file.split('_', 1)[0])
                     if fileid >= self.id:
                         self.id = fileid + 1
         else:
-            self.scratch_dir = tempfile.mkdtemp(dir=self.scratch_root)
+            self.scratch_dir = tempfile.mkdtemp(prefix='invenio_presentation_',
+                                                dir=self.scratch_root)
             self.id = 0
 
     def validate_dir(self, path):
@@ -68,9 +70,14 @@ class ScratchDirectory:
     def from_path(path):
         return ScratchDirectory(scratch_dir=path)
 
-    def create_file(self, task_name=None):
-        return tempfile.mkstemp(prefix='{}{}'
+    def create_file(self, task_name=None, pass_fh=False):
+        fd, path = tempfile.mkstemp(dir=self.dir_path, prefix='{}{}'
                                 .format(self._next(), task_name))
+        if pass_fh:
+            return os.fdopen(fd, "w"), path
+        else:
+            os.close(fd)
+            return path
 
     def create_directory(self):
         return self._next()

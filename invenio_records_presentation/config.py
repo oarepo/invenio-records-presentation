@@ -28,7 +28,13 @@ INVENIO_RECORDS_PRESENTATION_TYPES = dict(
     #   ]
     # }
     example=dict(
-        tasks=['invenio_records_presentation.workflows.presentation:get_filename'],
+        tasks=[
+            'invenio_records_presentation.workflows.presentation:print_extra_data',
+            'invenio_records_presentation.workflows.presentation:create_example_file',
+            'invenio_records_presentation.workflows.presentation:print_data',
+            'invenio_records_presentation.workflows.presentation:transform_example_file',
+            'invenio_records_presentation.workflows.presentation:print_data',
+        ],
         permissions=[]
     )
 )
