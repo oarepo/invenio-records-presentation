@@ -25,7 +25,6 @@ def obj_or_import_string(value, default=None):
 
 
 class ScratchDirectory:
-
     id = 0
 
     def __init__(self, scratch_dir=None):
@@ -52,7 +51,7 @@ class ScratchDirectory:
                 and real_path.startswith(self.scratch_dir)):
             raise WorkflowAccessOutsideScratch(
                 'Path {} is outside of scratch root {}'
-                                 .format(path, self.scratch_dir))
+                    .format(path, self.scratch_dir))
 
     def _next(self):
         base = '%06d_' % self.id
@@ -70,9 +69,10 @@ class ScratchDirectory:
     def from_path(path):
         return ScratchDirectory(scratch_dir=path)
 
-    def create_file(self, task_name=None, pass_fh=False):
+    def create_file(self, task_name=None, pass_fh=False, suffix=None):
         fd, path = tempfile.mkstemp(dir=self.dir_path, prefix='{}{}'
-                                .format(self._next(), task_name))
+                                    .format(self._next(), task_name),
+                                    suffix=suffix)
         if pass_fh:
             return os.fdopen(fd, "wb"), path
         else:
