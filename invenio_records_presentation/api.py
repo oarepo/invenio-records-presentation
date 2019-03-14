@@ -9,7 +9,7 @@
 from typing import Optional
 
 from invenio_db import db
-from invenio_records import Record
+from invenio_records_files.api import Record
 from invenio_workflows import workflows, WorkflowObject
 from invenio_workflows.errors import WorkflowsMissingData
 from sqlalchemy.orm.exc import NoResultFound
