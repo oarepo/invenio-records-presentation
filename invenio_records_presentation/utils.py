@@ -74,7 +74,7 @@ class ScratchDirectory:
         fd, path = tempfile.mkstemp(dir=self.dir_path, prefix='{}{}'
                                 .format(self._next(), task_name))
         if pass_fh:
-            return os.fdopen(fd, "w"), path
+            return os.fdopen(fd, "wb"), path
         else:
             os.close(fd)
             return path
