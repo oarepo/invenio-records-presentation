@@ -35,7 +35,9 @@ INVENIO_RECORDS_PRESENTATION_TYPES = dict(
             'invenio_records_presentation.workflows.presentation:transform_example_file',
             'invenio_records_presentation.workflows.presentation:print_data',
         ],
-        permissions=[]
+        permissions=[
+            ('flask_principal.RoleNeed', 'admin')
+        ]
     )
 )
 """ Define a tasks to be called for a certain record presentation

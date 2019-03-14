@@ -15,7 +15,7 @@ from invenio_workflows.errors import WorkflowsMissingData
 from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_records_presentation.errors import WorkflowsRecordNotFound
-from invenio_records_presentation.permissions import check_permissions
+from invenio_records_presentation.permissions import needs_permission
 from invenio_records_presentation.workflows import PresentationWorkflow, presentation_workflow_factory
 from .utils import obj_or_import_string, ScratchDirectory
 
@@ -27,7 +27,7 @@ class PresentationWorkflowObject(WorkflowObject):
         """Instantiate class."""
         super(PresentationWorkflowObject, self).__init__(model)
 
-    #@need_permission(lambda self, 'start-workflow')
+    @needs_permission()
     def start_workflow(self, workflow_name, delayed=False, permissions=None,
                        record_uuid=None, user=None, request_headers=dict, **kwargs):
         """Run the workflow specified on the object.
@@ -109,12 +109,12 @@ class Presentation(object):
 
     def init_permissions(self, permission_list: list):
         """ Initialize permissions needed for presentation tasks execution """
-        for perm in permission_list:
+        for perm, args in permission_list:
             perm_obj = obj_or_import_string(perm)
             if not perm_obj:
                 raise AttributeError('Permission "{}" could not be initialized'.format(perm))
 
-            self.permissions.append(perm)
+            self.permissions.append(perm_obj(args))
 
     def register_workflow(self):
         """ Register itself by a name into invenio-workflows registry """

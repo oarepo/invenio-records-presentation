@@ -53,8 +53,8 @@ def pass_engine(f):
     return decorate
 
 
-@login_required
 @blueprint.route("/record/<string:record_uuid>/<string:presentation_id>/")
+@login_required
 def prepare(record_uuid: str, presentation_id: str):
     p = None
 
@@ -89,9 +89,9 @@ def prepare(record_uuid: str, presentation_id: str):
         abort(400, 'There was an error in the {} workflow definition'.format(p.name))
 
 
+@blueprint.route("/status/<string:eng_uuid>/")
 @pass_engine
 @login_required
-@blueprint.route("/status/<string:eng_uuid>/")
 def status(engine: WorkflowEngine):
     object = engine.objects[-1]
     return jsonify({'status_id': object.status.value,
@@ -100,9 +100,9 @@ def status(engine: WorkflowEngine):
                     'modified': object.modified})
 
 
+@blueprint.route("/download/<string:eng_uuid>/")
 @pass_engine
 @login_required
-@blueprint.route("/download/<string:eng_uuid>/")
 def download(engine: WorkflowEngine):
     object = engine.objects[-1]
     return jsonify({'location': object.data})
