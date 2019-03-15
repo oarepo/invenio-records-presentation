@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
+import traceback
 from functools import wraps
 
 from flask import Blueprint, jsonify, abort, request
@@ -21,6 +22,9 @@ from invenio_records_presentation.permissions import check_engine_owner
 from .api import Presentation
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
+
+import logging
+log = logging.getLogger(__name__)
 
 blueprint = Blueprint(
     'invenio_records_presentation',
@@ -106,7 +110,8 @@ def prepare(record_uuid: str, presentation_id: str):
         return jsonify({'job_id': eng_uuid})
     except WorkflowsPermissionError as e:
         abort(403, e)
-    except WorkflowDefinitionError:
+    except WorkflowDefinitionError as e:
+        log.exception('There was an error in the {} workflow definition'.format(p.name))
         abort(400, 'There was an error in the {} workflow definition'.format(p.name))
 
 

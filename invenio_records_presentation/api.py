@@ -100,7 +100,6 @@ class Presentation(object):
         self.permissions = []
         self.init_tasks(tasks)
         self.init_permissions(permissions)
-        self.register_workflow()
         self.initialized = True
 
     def init_tasks(self, task_list: list):
@@ -120,12 +119,6 @@ class Presentation(object):
                 raise AttributeError('Permission "{}" could not be initialized'.format(perm))
 
             self.permissions.append(perm_obj(args))
-
-    def register_workflow(self):
-        """ Register itself by a name into invenio-workflows registry """
-        if not self.workflow:
-            workflow = presentation_workflow_factory(task_list=self.tasks)
-            workflows[self.name] = workflow
 
     @property
     def workflow(self) -> Optional[PresentationWorkflow]:
