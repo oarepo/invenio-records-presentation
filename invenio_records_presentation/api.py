@@ -8,6 +8,7 @@
 """ API for Invenio Records Presentation."""
 from typing import Optional
 
+from invenio_accounts.models import User
 from invenio_db import db
 from invenio_records_files.api import Record
 from invenio_workflows import workflows, WorkflowObject
@@ -78,6 +79,10 @@ class PresentationWorkflowObject(WorkflowObject):
         except NoResultFound:
             raise WorkflowsRecordNotFound('No Record for id: {}'
                                           .format(self.model.extra_data['_record']))
+
+    @property
+    def user(self):
+        return User.query.get(self.model.extra_data['_user']['id'])
 
     @property
     def scratch(self) -> ScratchDirectory:

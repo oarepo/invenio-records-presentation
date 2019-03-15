@@ -99,7 +99,7 @@ setup(
         'invenio_base.api_apps': [
             'invenio_records_presentation = invenio_records_presentation:InvenioRecordsPresentation',
         ],
-        'invenio_base.blueprints': [
+        'invenio_base.api_blueprints': [
             'invenio_records_presentation = invenio_records_presentation.views:blueprint',
         ]
     },

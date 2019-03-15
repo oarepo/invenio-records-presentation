@@ -25,7 +25,7 @@ from .proxies import current_records_presentation
 blueprint = Blueprint(
     'invenio_records_presentation',
     __name__,
-    url_prefix='/presentation'
+    url_prefix='/presentation/1.0'
 )
 """Blueprint used for loading templates and static assets
 
@@ -51,6 +51,11 @@ def pass_engine(f):
 
         return f(engine=engine, *args, **kwargs)
     return decorate
+
+
+@blueprint.route("/")
+def index():
+    return 'presentation loaded successfully'
 
 
 @blueprint.route("/record/<string:record_uuid>/<string:presentation_id>/")
