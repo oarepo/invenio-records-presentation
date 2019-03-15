@@ -24,7 +24,8 @@ presentation_workflow_start_all = PresentationWorkflowStart(None)
 
 def check_engine_owner(engine: WorkflowEngine):
     """ Check if the engine belongs to a logged in user """
-    if engine.id_user != current_user.id:
+    id_user = engine.objects[-1].extra_data['_user']['id']
+    if id_user != current_user.id:
         raise WorkflowsPermissionError('You do not have a permission to access the workflow')
 
 
@@ -34,7 +35,6 @@ def needs_permission():
         @wraps(f)
         def decorate(*args, **kwargs):
             permissions = kwargs.get('permissions', [])
-            print('NEED {}'.format(kwargs))
             if permissions:
                 check_permission(Permission(*permissions))
             return f(*args, **kwargs)

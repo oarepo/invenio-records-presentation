@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 
 from functools import wraps
 
-from flask import Blueprint, jsonify, abort, request, Response
+from flask import Blueprint, jsonify, abort, request
 from flask_login import current_user, login_required
 from invenio_userprofiles import UserProfile
 from invenio_workflows import WorkflowEngine, ObjectStatus
@@ -34,8 +34,10 @@ templates and static files located in the folders of the same names next to
 this file.
 """
 
+
 def pass_engine(f):
     """Decorate to retrieve a workflow engine."""
+
     @wraps(f)
     def decorate(*args, **kwargs):
         eng_uuid = kwargs.pop('eng_uuid')
@@ -50,15 +52,29 @@ def pass_engine(f):
             abort(404, 'Presentation job does not exist.')
 
         return f(engine=engine, *args, **kwargs)
+
+    return decorate
+
+
+def with_presentations(f):
+    """ Init all presentation objects """
+
+    @wraps(f)
+    def decorate(*args, **kwargs):
+        current_records_presentation.init_presentations()
+        return f(*args, **kwargs)
+
     return decorate
 
 
 @blueprint.route("/")
+@with_presentations
 def index():
     return 'presentation loaded successfully'
 
 
-@blueprint.route("/record/<string:record_uuid>/<string:presentation_id>/")
+@blueprint.route("/prepare/<string:record_uuid>/<string:presentation_id>/", methods=('POST'))
+@with_presentations
 @login_required
 def prepare(record_uuid: str, presentation_id: str):
     p = None
@@ -95,6 +111,7 @@ def prepare(record_uuid: str, presentation_id: str):
 
 
 @blueprint.route("/status/<string:eng_uuid>/")
+@with_presentations
 @pass_engine
 @login_required
 def status(engine: WorkflowEngine):
@@ -106,6 +123,7 @@ def status(engine: WorkflowEngine):
 
 
 @blueprint.route("/download/<string:eng_uuid>/")
+@with_presentations
 @pass_engine
 @login_required
 def download(engine: WorkflowEngine):

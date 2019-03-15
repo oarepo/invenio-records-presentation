@@ -10,14 +10,11 @@
 from __future__ import absolute_import, print_function
 
 import tempfile
+from functools import lru_cache
 
-from invenio_access import ActionRoles
-from invenio_accounts.models import Role
-from invenio_db import db
 from werkzeug.utils import cached_property
 
 from invenio_records_presentation.api import Presentation
-from invenio_records_presentation.permissions import presentation_workflow_start_all
 from . import config
 
 
@@ -26,6 +23,11 @@ class _RecordsPresentationState(object):
     def __init__(self, app):
         self.app = app
         self.presentations = {}
+
+    @lru_cache(maxsize=1)
+    def init_presentations(self):
+        for presid in self.presentation_types.keys():
+            self.presentations[presid] = self.get_presentation(presid)
 
     @cached_property
     def presentation_types(self) -> dict:
