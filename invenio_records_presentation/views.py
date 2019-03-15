@@ -106,8 +106,6 @@ def pid_prepare(pid_type: str, pid: str, presentation: Presentation):
 @pass_presentation
 @login_required
 def prepare(record_uuid: str, presentation: Presentation):
-    p = None
-
     profile_meta = {}
     profile: UserProfile = UserProfile.get_by_userid(current_user.id)
     if profile:
@@ -126,7 +124,7 @@ def prepare(record_uuid: str, presentation: Presentation):
     headers = {k: v for k, v in request.headers}
 
     try:
-        eng_uuid = p.prepare(record_uuid, user_meta, headers)
+        eng_uuid = presentation.prepare(record_uuid, user_meta, headers)
         return jsonify({'job_id': eng_uuid})
     except WorkflowsPermissionError as e:
         abort(403, e)
