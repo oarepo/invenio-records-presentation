@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 import tempfile
 from functools import lru_cache
 
+from invenio_workflows import workflows
 from werkzeug.utils import cached_property
 
 from invenio_records_presentation.api import Presentation
@@ -31,7 +32,12 @@ class _RecordsPresentationState(object):
 
     @cached_property
     def presentation_types(self) -> dict:
-        return self.app.config['INVENIO_RECORDS_PRESENTATION_TYPES']
+        ret = {}
+        for workflow_id in workflows.keys():
+            ret[workflow_id] = {
+                'permissions': self.app.config['INVENIO_RECORDS_PRESENTATION_PERMISSIONS'].get(workflow_id, [])
+            }
+        return ret
 
     @cached_property
     def scratch_location(self) -> str:
@@ -48,11 +54,10 @@ class _RecordsPresentationState(object):
         if not presentation:
             try:
                 pres_conf = self.presentation_types[presentation_id]
-                tasks = pres_conf['tasks']
                 permissions = pres_conf['permissions']
             except KeyError:
                 raise AttributeError('Invalid presentation type: {}'.format(presentation_id))
-            presentation = Presentation(name=presentation_id, tasks=tasks, permissions=permissions)
+            presentation = Presentation(name=presentation_id, permissions=permissions)
             self.presentations[presentation_id] = presentation
 
         return presentation

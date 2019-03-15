@@ -15,7 +15,7 @@ WORKFLOWS_OBJECT_CLASS = 'invenio_records_presentation.api.PresentationWorkflowO
 INVENIO_RECORDS_PRESENTATION_SCRATCH_LOCATION = None
 """ Location of temporary files created by presentation tasks. Defaults to: /tmp/ """
 
-INVENIO_RECORDS_PRESENTATION_TYPES = dict(
+INVENIO_RECORDS_PRESENTATION_PERMISSIONS = dict(
     # presentation_id: {
     #   tasks: [
     #       module1:task1,
@@ -27,18 +27,21 @@ INVENIO_RECORDS_PRESENTATION_TYPES = dict(
     #       ...
     #   ]
     # }
-    example=dict(
-        tasks=[
-            'invenio_records_presentation.workflows.presentation:print_extra_data',
-            'invenio_records_presentation.workflows.presentation:create_example_file',
-            'invenio_records_presentation.workflows.presentation:print_data',
-            'invenio_records_presentation.workflows.presentation:transform_example_file',
-            'invenio_records_presentation.workflows.presentation:print_data',
-        ],
-        permissions=[
-            ('flask_principal.RoleNeed', 'admin')
-        ]
-    )
+    # example=dict(
+    #     tasks=[
+    #         'invenio_records_presentation.workflows.presentation:print_extra_data',
+    #         'invenio_records_presentation.workflows.presentation:create_example_file',
+    #         'invenio_records_presentation.workflows.presentation:print_data',
+    #         'invenio_records_presentation.workflows.presentation:transform_example_file',
+    #         'invenio_records_presentation.workflows.presentation:print_data',
+    #     ],
+    #     permissions=[
+    #
+    #     ]
+    # )
+    example = [
+        ('flask_principal.RoleNeed', 'admin')
+    ]
 )
 """ Define a tasks to be called for a certain record presentation
     and permissions to be checked before the presentation tasks are executed in a pipeline.

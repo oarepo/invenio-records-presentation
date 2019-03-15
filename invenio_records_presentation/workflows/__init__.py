@@ -7,7 +7,12 @@
 
 """ Presentation workflow."""
 
-from .presentation import PresentationWorkflow
+
+class PresentationWorkflow(object):
+    workflow = []
+
+    def __init__(self, task_list: list):
+        self.workflow = task_list
 
 
 def presentation_workflow_factory(task_list: list) -> PresentationWorkflow:

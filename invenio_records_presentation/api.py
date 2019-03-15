@@ -17,7 +17,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_records_presentation.errors import WorkflowsRecordNotFound
 from invenio_records_presentation.permissions import needs_permission
-from invenio_records_presentation.workflows import PresentationWorkflow, presentation_workflow_factory
+from invenio_records_presentation.workflows import PresentationWorkflow
 from .utils import obj_or_import_string, ScratchDirectory
 
 
@@ -94,22 +94,11 @@ class PresentationWorkflowObject(WorkflowObject):
 
 class Presentation(object):
 
-    def __init__(self, name: str, tasks: list, permissions: list):
+    def __init__(self, name: str, permissions: list):
         self.name = name
-        self.tasks = []
         self.permissions = []
-        self.init_tasks(tasks)
         self.init_permissions(permissions)
         self.initialized = True
-
-    def init_tasks(self, task_list: list):
-        """ Initialize tasks for a workflow pipeline"""
-        for task in task_list:
-            task_obj = obj_or_import_string(task)
-            if not task_obj:
-                raise AttributeError('Task "{}" could not be loaded'.format(task))
-
-            self.tasks.append(task_obj)
 
     def init_permissions(self, permission_list: list):
         """ Initialize permissions needed for presentation tasks execution """
