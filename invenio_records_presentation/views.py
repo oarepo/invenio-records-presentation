@@ -91,12 +91,11 @@ def index():
 
 @blueprint.route('/prepare/<string:pid_type>/<string:pid>/<string:presentation_id>/', methods=('POST',))
 @with_presentations
-@pass_presentation
 @login_required
-def pid_prepare(pid_type: str, pid: str, presentation: Presentation):
+def pid_prepare(pid_type: str, pid: str, presentation_id: str):
     pid_record = PersistentIdentifier.query.filter_by(pid_type=pid_type, pid_value=pid).one_or_none()
     if pid_record:
-        return prepare(pid_record.object_uuid, presentation_id=presentation.name)
+        return prepare(pid_record.object_uuid, presentation_id=presentation_id)
     else:
         abort(404, 'Record with PID {}:{} not found'.format(pid_type, pid_type))
 
