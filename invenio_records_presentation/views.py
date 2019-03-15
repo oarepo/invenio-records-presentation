@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 from functools import wraps
 
 from flask import Blueprint, jsonify, abort, request
-from flask_login import current_user, login_required
+from flask_login import current_user
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
 from invenio_workflows import WorkflowEngine, ObjectStatus
@@ -91,11 +91,10 @@ def index():
 
 @blueprint.route('/prepare/<string:pid_type>/<string:pid>/<string:presentation_id>/', methods=('POST',))
 @with_presentations
-@login_required
 def pid_prepare(pid_type: str, pid: str, presentation_id: str):
     pid_record = PersistentIdentifier.query.filter_by(pid_type=pid_type, pid_value=pid).one_or_none()
     if pid_record:
-        return prepare(pid_record.object_uuid, presentation_id=presentation_id)
+        return prepare(str(pid_record.object_uuid), presentation_id=presentation_id)
     else:
         abort(404, 'Record with PID {}:{} not found'.format(pid_type, pid_type))
 
@@ -103,23 +102,31 @@ def pid_prepare(pid_type: str, pid: str, presentation_id: str):
 @blueprint.route('/prepare/<string:record_uuid>/<string:presentation_id>/', methods=('POST',))
 @with_presentations
 @pass_presentation
-@login_required
 def prepare(record_uuid: str, presentation: Presentation):
-    profile_meta = {}
-    profile: UserProfile = UserProfile.get_by_userid(current_user.id)
-    if profile:
-        profile_meta = {
-            'full_name': profile.full_name,
-            'username': profile.username,
-
+    if current_user.is_anonymous:
+        user_meta = {
+            'id': None,
+            'email': None,
+            'current_login_ip': None,
+            'roles': [],
+            'full_name': 'Anonymous',
+            'username': None
         }
-    user_meta = {
-        'id': current_user.id,
-        'email': current_user.email,
-        'current_login_ip': str(current_user.current_login_ip),
-        'roles': [{'id': role.id, 'name': role.name} for role in current_user.roles]
-    }
-    user_meta.update(profile_meta)
+    else:
+        profile_meta = {}
+        profile: UserProfile = UserProfile.get_by_userid(current_user.id)
+        if profile:
+            profile_meta = {
+                'full_name': profile.full_name,
+                'username': profile.username,
+            }
+        user_meta = {
+            'id': current_user.id,
+            'email': current_user.email,
+            'current_login_ip': str(current_user.current_login_ip),
+            'roles': [{'id': role.id, 'name': role.name} for role in current_user.roles]
+        }
+        user_meta.update(profile_meta)
     headers = {k: v for k, v in request.headers}
 
     try:
@@ -128,13 +135,12 @@ def prepare(record_uuid: str, presentation: Presentation):
     except WorkflowsPermissionError as e:
         abort(403, e)
     except WorkflowDefinitionError:
-        abort(400, 'There was an error in the {} workflow definition'.format(p.name))
+        abort(400, 'There was an error in the {} workflow definition'.format(presentation.name))
 
 
 @blueprint.route('/status/<string:eng_uuid>/')
 @with_presentations
 @pass_engine
-@login_required
 def status(engine: WorkflowEngine):
     object = engine.objects[-1]
     return jsonify({'status_id': object.status.value,
@@ -146,7 +152,6 @@ def status(engine: WorkflowEngine):
 @blueprint.route('/download/<string:eng_uuid>/')
 @with_presentations
 @pass_engine
-@login_required
 def download(engine: WorkflowEngine):
     object = engine.objects[-1]
     return jsonify({'location': object.data})

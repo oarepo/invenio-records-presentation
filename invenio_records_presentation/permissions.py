@@ -25,7 +25,9 @@ presentation_workflow_start_all = PresentationWorkflowStart(None)
 def check_engine_owner(engine: WorkflowEngine):
     """ Check if the engine belongs to a logged in user """
     id_user = engine.objects[-1].extra_data['_user']['id']
-    if id_user != current_user.id:
+    if current_user.is_anonymous and id_user is not None:
+        raise WorkflowsPermissionError('You do not have a permission to access the workflow')
+    elif not current_user.is_anonymous and (id_user != current_user.id):
         raise WorkflowsPermissionError('You do not have a permission to access the workflow')
 
 
@@ -54,4 +56,4 @@ def check_permission(permission):
             raise WorkflowsPermissionError(
                   'You do not have a permission to run the workflow')
         raise WorkflowsNotAuthenticated(
-            'You do must be authenticated to run the workflow')
+            'You must be authenticated to run the workflow')
