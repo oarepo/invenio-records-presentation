@@ -9,11 +9,11 @@
 
 from __future__ import absolute_import, print_function
 
-import traceback
 from functools import wraps
 
 from flask import Blueprint, jsonify, abort, request
 from flask_login import current_user, login_required
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
 from invenio_workflows import WorkflowEngine, ObjectStatus
 from workflow.errors import WorkflowDefinitionError
@@ -22,9 +22,6 @@ from invenio_records_presentation.permissions import check_engine_owner
 from .api import Presentation
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
-
-import logging
-log = logging.getLogger(__name__)
 
 blueprint = Blueprint(
     'invenio_records_presentation',
@@ -60,6 +57,21 @@ def pass_engine(f):
     return decorate
 
 
+def pass_presentation(f):
+    """Decorate to provide a presentation instance."""
+
+    @wraps(f)
+    def decorate(*args, **kwargs):
+        presid = kwargs.pop('presentation_id')
+        try:
+            presentation = current_records_presentation.get_presentation(presid)
+            return f(presentation=presentation, *args, **kwargs)
+        except PresentationNotFound:
+            abort(400, 'Invalid presentation type')
+
+    return decorate
+
+
 def with_presentations(f):
     """ Init all presentation objects """
 
@@ -77,17 +89,22 @@ def index():
     return 'presentation loaded successfully'
 
 
-@blueprint.route("/prepare/<string:record_uuid>/<string:presentation_id>/", methods=('POST',))
+@blueprint.route('/prepare/<string:pid_type>/<string:pid>/<string:presentation_id>/', methods=('POST',))
 @with_presentations
 @login_required
-def prepare(record_uuid: str, presentation_id: str):
-    p = None
+def pid_prepare(pid_type: str, pid: str, presentation_id: str):
+    pid_record = PersistentIdentifier.query.filter_by(pid_type=pid_type, pid_value=pid).one_or_none()
+    if pid_record:
+        return prepare(pid_record.object_uuid, presentation_id=presentation_id)
+    else:
+        abort(404, 'Record with PID {}:{} not found'.format(pid_type, pid_type))
 
-    try:
-        p: Presentation = current_records_presentation.get_presentation(presentation_id)
-    except PresentationNotFound:
-        abort(400)
 
+@blueprint.route('/prepare/<string:record_uuid>/<string:presentation_id>/', methods=('POST',))
+@with_presentations
+@pass_presentation
+@login_required
+def prepare(record_uuid: str, presentation: Presentation):
     profile_meta = {}
     profile: UserProfile = UserProfile.get_by_userid(current_user.id)
     if profile:
@@ -106,16 +123,15 @@ def prepare(record_uuid: str, presentation_id: str):
     headers = {k: v for k, v in request.headers}
 
     try:
-        eng_uuid = p.prepare(record_uuid, user_meta, headers)
+        eng_uuid = presentation.prepare(record_uuid, user_meta, headers)
         return jsonify({'job_id': eng_uuid})
     except WorkflowsPermissionError as e:
         abort(403, e)
-    except WorkflowDefinitionError as e:
-        log.exception('There was an error in the {} workflow definition'.format(p.name))
+    except WorkflowDefinitionError:
         abort(400, 'There was an error in the {} workflow definition'.format(p.name))
 
 
-@blueprint.route("/status/<string:eng_uuid>/")
+@blueprint.route('/status/<string:eng_uuid>/')
 @with_presentations
 @pass_engine
 @login_required
@@ -127,7 +143,7 @@ def status(engine: WorkflowEngine):
                     'modified': object.modified})
 
 
-@blueprint.route("/download/<string:eng_uuid>/")
+@blueprint.route('/download/<string:eng_uuid>/')
 @with_presentations
 @pass_engine
 @login_required
