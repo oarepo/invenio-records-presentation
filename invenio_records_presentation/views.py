@@ -73,7 +73,7 @@ def index():
     return 'presentation loaded successfully'
 
 
-@blueprint.route("/prepare/<string:record_uuid>/<string:presentation_id>/", methods=('POST'))
+@blueprint.route("/prepare/<string:record_uuid>/<string:presentation_id>/", methods=('POST',))
 @with_presentations
 @login_required
 def prepare(record_uuid: str, presentation_id: str):
