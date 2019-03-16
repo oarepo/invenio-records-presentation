@@ -7,6 +7,7 @@
 
 """ Utils for Invenio Records Presentation."""
 import os
+import shutil
 import tempfile
 
 from six import string_types
@@ -81,3 +82,6 @@ class ScratchDirectory:
 
     def create_directory(self):
         return self._next()
+
+    def remove(self):
+        shutil.rmtree(self.scratch_dir)

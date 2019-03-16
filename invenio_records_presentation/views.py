@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 
 from functools import wraps
 
-from flask import Blueprint, jsonify, abort, request
+from flask import Blueprint, jsonify, abort, request, Response
 from flask_login import current_user
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
@@ -19,7 +19,7 @@ from invenio_workflows import WorkflowEngine, ObjectStatus
 from workflow.errors import WorkflowDefinitionError
 
 from invenio_records_presentation.permissions import check_engine_owner
-from .api import Presentation
+from .api import Presentation, PresentationWorkflowObject, PresentationOutputFile
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
 
@@ -153,5 +153,19 @@ def status(engine: WorkflowEngine):
 @with_presentations
 @pass_engine
 def download(engine: WorkflowEngine):
-    object = engine.objects[-1]
-    return jsonify({'location': object.data})
+    object = PresentationWorkflowObject(engine.objects[-1])
+
+    data_path = object.scratch.full_path(object.data['path'])
+
+    def serve():
+        with open(data_path, 'rb') as f:
+            while True:
+                buf = f.read(128000)
+                if not buf:
+                    break
+                yield buf
+
+    return Response(serve(), mimetype=object.data['mimetype'], headers={
+        'Content-disposition': 'inline; filename=\"{}\"'.format(object.data['filename']),
+        'Content-Security-Policy': "object-src 'self';"
+    })
