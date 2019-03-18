@@ -113,7 +113,7 @@ class Presentation(object):
     def workflow(self) -> Optional[PresentationWorkflow]:
         return workflows.get(self.name, None)
 
-    def prepare(self, record_uuid, user, request_headers=dict) -> str:
+    def prepare(self, record_uuid, user, request_headers=dict, delayed=True) -> str:
         """ Prepare Presentation of a given record
 
             :param record_uuid: UUID of a Record to be presented
@@ -125,7 +125,7 @@ class Presentation(object):
         assert self.initialized
 
         presentation_obj = PresentationWorkflowObject().create(data='/tmp')
-        return presentation_obj.start_workflow(self.name, delayed=True,
+        return presentation_obj.start_workflow(self.name, delayed=delayed,
                                                permissions=self.permissions,
                                                record_uuid=record_uuid, user=user,
                                                request_headers=request_headers)

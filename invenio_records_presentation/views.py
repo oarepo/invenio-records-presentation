@@ -125,7 +125,7 @@ def prepare(record_uuid: str, presentation: Presentation):
     headers = {k: v for k, v in request.headers}
 
     try:
-        result = presentation.prepare(record_uuid, user_meta, headers)
+        result = presentation.prepare(record_uuid, user_meta, headers, delayed=False)
         if isinstance(result, AsyncResult):
             return jsonify({'job_id': result.task_id})
         else:
