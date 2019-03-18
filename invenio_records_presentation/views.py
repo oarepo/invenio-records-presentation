@@ -13,14 +13,14 @@ from functools import wraps
 from uuid import UUID
 
 from celery.result import AsyncResult, result_from_tuple
-from flask import Blueprint, jsonify, abort, request
+from flask import Blueprint, jsonify, abort, request, Response
 from flask_login import current_user
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
 from invenio_workflows import WorkflowEngine
 from workflow.errors import WorkflowDefinitionError
 
-from .api import Presentation
+from .api import Presentation, PresentationWorkflowObject
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
 
@@ -43,11 +43,11 @@ def pass_result(f):
     @wraps(f)
     def decorate(*args, **kwargs):
         job_uuid = kwargs.pop('job_uuid')
-        try:
-            result: AsyncResult = result_from_tuple([[job_uuid, None], None])
-            return f(result=result, *args, **kwargs)
-        except Exception:
+        result: AsyncResult = result_from_tuple([[job_uuid, None], None])
+        if result is None:
             abort(400, 'Invalid job UUID')
+
+        return f(result=result, *args, **kwargs)
 
     return decorate
 
@@ -158,4 +158,19 @@ def status(result: AsyncResult):
 def download(result: AsyncResult):
     eng_uuid = result.get()  # Will wait until task has completed
     engine = WorkflowEngine.from_uuid(eng_uuid)
-    return jsonify({'location': engine.objects[0].data})
+    object = PresentationWorkflowObject(engine.objects[-1])
+
+    data_path = object.scratch.full_path(object.data['path'])
+
+    def serve():
+        with open(data_path, 'rb') as f:
+            while True:
+                buf = f.read(128000)
+                if not buf:
+                    break
+                yield buf
+
+    return Response(serve(), mimetype=object.data['mimetype'], headers={
+        'Content-disposition': 'inline; filename=\"{}\"'.format(object.data['filename']),
+        'Content-Security-Policy': "object-src 'self';"
+    })

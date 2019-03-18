@@ -8,6 +8,7 @@
 """ Example Presentation workflow."""
 from invenio_workflows import WorkflowEngine
 
+from invenio_records_presentation.api import PresentationOutputFile
 from invenio_records_presentation.workflows import presentation_workflow_factory
 
 
@@ -47,10 +48,17 @@ def transform_example_file(obj, eng: WorkflowEngine):
     return obj
 
 
+def output_example_file(obj, eng: WorkflowEngine):
+    obj.data = PresentationOutputFile(path=obj.data,
+                                      mimetype='text/plain',
+                                      filename='example.txt')
+    return obj
+
+
 example = presentation_workflow_factory(task_list=[
     print_extra_data,
     create_example_file,
     print_data,
     transform_example_file,
-    print_data,
+    output_example_file,
 ])

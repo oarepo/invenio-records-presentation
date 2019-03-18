@@ -129,3 +129,11 @@ class Presentation(object):
                                                permissions=self.permissions,
                                                record_uuid=record_uuid, user=user,
                                                request_headers=request_headers)
+
+
+def PresentationOutputFile(path, mimetype, filename):
+    return dict(
+        path=path,
+        mimetype=mimetype,
+        filename=filename,
+    )
