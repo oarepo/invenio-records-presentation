@@ -125,7 +125,7 @@ class Presentation(object):
         assert self.initialized
 
         presentation_obj = PresentationWorkflowObject().create(data='/tmp')
-        return presentation_obj.start_workflow(self.name, delayed=False,
+        return presentation_obj.start_workflow(self.name, delayed=True,
                                                permissions=self.permissions,
                                                record_uuid=record_uuid, user=user,
                                                request_headers=request_headers)

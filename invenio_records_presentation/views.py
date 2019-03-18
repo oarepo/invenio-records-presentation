@@ -10,15 +10,16 @@
 from __future__ import absolute_import, print_function
 
 from functools import wraps
+from uuid import UUID
 
+from celery.result import AsyncResult, result_from_tuple
 from flask import Blueprint, jsonify, abort, request
 from flask_login import current_user
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
-from invenio_workflows import WorkflowEngine, ObjectStatus
+from invenio_workflows import WorkflowEngine
 from workflow.errors import WorkflowDefinitionError
 
-from invenio_records_presentation.permissions import check_engine_owner
 from .api import Presentation
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
@@ -36,23 +37,17 @@ this file.
 """
 
 
-def pass_engine(f):
-    """Decorate to retrieve a workflow engine."""
+def pass_result(f):
+    """Decorate to provide an AsyncResult instance of the job."""
 
     @wraps(f)
     def decorate(*args, **kwargs):
-        eng_uuid = kwargs.pop('eng_uuid')
-        engine = WorkflowEngine.from_uuid(eng_uuid)
-        if not engine:
-            abort(404, 'Presentation job does not exist.')
+        job_uuid = kwargs.pop('job_uuid')
         try:
-            check_engine_owner(engine)
-        except WorkflowsPermissionError:
-            # Do not expose that the job actually exists,
-            # just for a different user.
-            abort(404, 'Presentation job does not exist.')
-
-        return f(engine=engine, *args, **kwargs)
+            result: AsyncResult = result_from_tuple([[job_uuid, None], None])
+            return f(result=result, *args, **kwargs)
+        except Exception:
+            abort(400, 'Invalid job UUID')
 
     return decorate
 
@@ -130,28 +125,37 @@ def prepare(record_uuid: str, presentation: Presentation):
     headers = {k: v for k, v in request.headers}
 
     try:
-        eng_uuid = presentation.prepare(record_uuid, user_meta, headers)
-        return jsonify({'job_id': eng_uuid})
+        result = presentation.prepare(record_uuid, user_meta, headers)
+        if isinstance(result, AsyncResult):
+            return jsonify({'job_id': result.task_id})
+        else:
+            return jsonify({'job_id': result})
     except WorkflowsPermissionError as e:
         abort(403, e)
     except WorkflowDefinitionError:
         abort(400, 'There was an error in the {} workflow definition'.format(presentation.name))
 
 
-@blueprint.route('/status/<string:eng_uuid>/')
-@with_presentations
-@pass_engine
-def status(engine: WorkflowEngine):
-    object = engine.objects[-1]
-    return jsonify({'status_id': object.status.value,
-                    'status': ObjectStatus.labels[object.status.value],
-                    'created': object.created,
-                    'modified': object.modified})
+@blueprint.route('/status/<string:job_uuid>/')
+@pass_result
+def status(result: AsyncResult):
+    try:
+        eng_uuid = str(UUID(result.info, version=4))
+        engine = WorkflowEngine.from_uuid(eng_uuid)
+        object = engine.objects[-1]
+        info = {'current_data': object.data,
+                'created': object.created,
+                'modified': object.modified}
+
+    except Exception:
+        info = result.info
+
+    return jsonify({'status': result.state, 'info': info})
 
 
-@blueprint.route('/download/<string:eng_uuid>/')
-@with_presentations
-@pass_engine
-def download(engine: WorkflowEngine):
-    object = engine.objects[-1]
-    return jsonify({'location': object.data})
+@blueprint.route('/download/<string:job_uuid>/')
+@pass_result
+def download(result: AsyncResult):
+    eng_uuid = result.get()  # Will wait until task has completed
+    engine = WorkflowEngine.from_uuid(eng_uuid)
+    return jsonify({'location': engine.objects[0].data})
