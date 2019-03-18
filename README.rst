@@ -8,14 +8,14 @@
  Invenio Records Presentation
 ==============================
 
-.. image:: https://img.shields.io/github/license/CESNET/invenio-records-presentation.svg
-        :target: https://github.com/CESNET/invenio-records-presentation/blob/master/LICENSE
+.. image:: https://img.shields.io/github/license/oarepo/invenio-records-presentation.svg
+        :target: https://github.com/oarepo/invenio-records-presentation/blob/master/LICENSE
 
-.. image:: https://img.shields.io/travis/CESNET/invenio-records-presentation.svg
-        :target: https://travis-ci.org/CESNET/invenio-records-presentation
+.. image:: https://img.shields.io/travis/oarepo/invenio-records-presentation.svg
+        :target: https://travis-ci.org/oarepo/invenio-records-presentation
 
-.. image:: https://img.shields.io/coveralls/CESNET/invenio-records-presentation.svg
-        :target: https://coveralls.io/r/CESNET/invenio-records-presentation
+.. image:: https://img.shields.io/coveralls/oarepo/invenio-records-presentation.svg
+        :target: https://coveralls.io/r/oarepo/invenio-records-presentation
 
 .. image:: https://img.shields.io/pypi/v/invenio-records-presentation.svg
         :target: https://pypi.org/pypi/invenio-records-presentation

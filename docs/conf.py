@@ -124,7 +124,7 @@ html_theme_options = {
     'github_banner': True,
     'show_powered_by': False,
     'extra_nav_links': {
-        'invenio-records-presentation@GitHub': 'https://github.com/CESNET/invenio-records-presentation',
+        'invenio-records-presentation@GitHub': 'https://github.com/oarepo/invenio-records-presentation',
         'invenio-records-presentation@PyPI': 'https://pypi.python.org/pypi/invenio-records-presentation/',
     }
 }

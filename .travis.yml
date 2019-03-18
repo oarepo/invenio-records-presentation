@@ -69,5 +69,5 @@ deploy:
   on:
     tags: true
     python: "3.6"
-    repo: CESNET/invenio-records-presentation
+    repo: oarepo/invenio-records-presentation
     condition: $DEPLOY = true
