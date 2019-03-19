@@ -153,6 +153,12 @@ def status(result: AsyncResult):
     return jsonify({'status': result.state, 'info': info})
 
 
+import unicodedata
+def strip_accents(s):
+   return ''.join(c for c in unicodedata.normalize('NFD', s)
+                  if unicodedata.category(c) != 'Mn')
+
+
 @blueprint.route('/download/<string:job_uuid>/')
 @pass_result
 def download(result: AsyncResult):
@@ -171,6 +177,6 @@ def download(result: AsyncResult):
                 yield buf
 
     return Response(serve(), mimetype=object.data['mimetype'], headers={
-        'Content-disposition': 'inline; filename=\"{}\"'.format(object.data['filename']),
+        'Content-disposition': 'inline; filename=\"{}\"'.format(strip_accents(object.data['filename'])),
         'Content-Security-Policy': "object-src 'self';"
     })
