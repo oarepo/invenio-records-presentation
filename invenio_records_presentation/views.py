@@ -102,7 +102,8 @@ def prepare(record_uuid: str, presentation: Presentation):
         user_meta = {
             'id': None,
             'email': None,
-            'current_login_ip': None,
+            'login_ip': None,
+            'current_ip': str(request.remote_addr),
             'roles': [],
             'full_name': 'Anonymous',
             'username': None
@@ -118,7 +119,8 @@ def prepare(record_uuid: str, presentation: Presentation):
         user_meta = {
             'id': current_user.id,
             'email': current_user.email,
-            'current_login_ip': str(current_user.current_login_ip),
+            'current_ip': str(request.remote_addr),
+            'login_ip': str(current_user.current_login_ip),
             'roles': [{'id': role.id, 'name': role.name} for role in current_user.roles]
         }
         user_meta.update(profile_meta)
