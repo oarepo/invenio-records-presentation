@@ -10,6 +10,7 @@
 from __future__ import absolute_import, print_function
 
 from functools import wraps
+import logging
 from uuid import UUID
 
 from celery.result import AsyncResult, result_from_tuple
@@ -23,6 +24,8 @@ from workflow.errors import WorkflowDefinitionError
 from .api import Presentation, PresentationWorkflowObject
 from .errors import PresentationNotFound, WorkflowsPermissionError
 from .proxies import current_records_presentation
+
+logger = logging.getLogger(__name__)
 
 blueprint = Blueprint(
     'invenio_records_presentation',
@@ -150,6 +153,7 @@ def status(result: AsyncResult):
                 'modified': object.modified}
 
     except Exception:
+        logger.exception('Exception detected in status')
         info = result.info
 
     return jsonify({'status': result.state, 'info': info})
