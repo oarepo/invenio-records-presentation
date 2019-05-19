@@ -9,12 +9,14 @@
 
 from __future__ import absolute_import, print_function
 
+import traceback
 from functools import wraps
 import logging
 from uuid import UUID
 
+from celery._state import app_or_default
 from celery.result import AsyncResult, result_from_tuple
-from flask import Blueprint, jsonify, abort, request, Response
+from flask import Blueprint, jsonify, abort, request, Response, current_app
 from flask_login import current_user
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_userprofiles import UserProfile
@@ -46,9 +48,11 @@ def pass_result(f):
     @wraps(f)
     def decorate(*args, **kwargs):
         job_uuid = kwargs.pop('job_uuid')
-        result: AsyncResult = result_from_tuple([[job_uuid, None], None])
-        if result is None:
-            abort(400, 'Invalid job UUID')
+        Result = app_or_default(None).AsyncResult
+        result = Result(job_uuid, parent=None)
+        # result: AsyncResult = result_from_tuple([[job_uuid, None], None])
+        # if result is None:
+        #     abort(400, 'Invalid job UUID')
 
         return f(result=result, *args, **kwargs)
 
@@ -136,14 +140,18 @@ def prepare(record_uuid: str, presentation: Presentation):
         else:
             return jsonify({'job_id': result})
     except WorkflowsPermissionError as e:
+        logger.exception('Exception detected in prepare')
         abort(403, e)
     except WorkflowDefinitionError:
+        logger.exception('Exception detected in prepare')
         abort(400, 'There was an error in the {} workflow definition'.format(presentation.name))
 
 
 @blueprint.route('/status/<string:job_uuid>/')
 @pass_result
 def status(result: AsyncResult):
+    if result.state == 'FAILURE':
+        print(result.traceback)
     try:
         eng_uuid = str(UUID(result.info, version=4))
         engine = WorkflowEngine.from_uuid(eng_uuid)
@@ -154,7 +162,7 @@ def status(result: AsyncResult):
 
     except Exception:
         logger.exception('Exception detected in status')
-        info = result.info
+        info = str(result.info)
 
     return jsonify({'status': result.state, 'info': info})
 
