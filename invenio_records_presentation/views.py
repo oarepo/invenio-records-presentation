@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
+import time
 import traceback
 from functools import wraps
 import logging
@@ -176,7 +177,17 @@ def strip_accents(s):
 @blueprint.route('/download/<string:job_uuid>/')
 @pass_result
 def download(result: AsyncResult):
-    eng_uuid = result.get()  # Will wait until task has completed
+    for i in range(10):
+        try:
+            time.sleep(1)
+            eng_uuid = result.get()  # Will wait until task has completed
+            break
+        except:
+            traceback.print_exc()
+            if i == 9:
+                raise
+            time.sleep(5)
+
     engine = WorkflowEngine.from_uuid(eng_uuid)
     object = PresentationWorkflowObject(engine.objects[-1])
 
